@@ -122,11 +122,11 @@ public class Server {
 
     // Extract recipient email address from the email content
     private static String extractToAddress(String email) {
-        // Assuming simple format, extract the first line after "TO:"
+        // Assuming simple format, extract the first line after "FROM:"
         String[] lines = email.split("\n");
         for (String line : lines) {
-            if (line.startsWith("TO:")) {
-                return line.substring(3).trim();
+            if (line.startsWith("FROM:")) {
+                return line.substring(5).trim();
             }
         }
         return null;

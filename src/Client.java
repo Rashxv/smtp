@@ -45,20 +45,22 @@ public class Client {
     // Create email by taking user input
     private static String createEmail() {
         Scanner scanner = new Scanner(System.in);
-
+    
         System.out.println("Creating New Email..");
-        System.out.print("To: ");
-        String to = scanner.nextLine();
-
+        
+        // Switch the order, start with "From:"
         System.out.print("From: ");
         String from = scanner.nextLine();
-
+    
+        System.out.print("To: ");
+        String to = scanner.nextLine();
+    
         System.out.print("Subject: ");
         String subject = scanner.nextLine();
-
+    
         System.out.print("Body: ");
         String body = scanner.nextLine();
-
-        return "TO: " + to + "\nFROM: " + from + "\nSUBJECT: " + subject + "\n\n\n" + body;
+    
+        return "FROM: " + from + "\nTO: " + to + "\nSUBJECT: " + subject + "\n\n\n" + body;
     }
 }
