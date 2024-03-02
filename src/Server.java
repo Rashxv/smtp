@@ -36,15 +36,13 @@ public class Server {
                     String toAddress = extractToAddress(email);
                     if (isValidRecipient(toAddress)) {
                         // Process and save email
-                        processEmail(email, receivePacket.getAddress(), receivePacket.getPort());
-                        sendConfirmationMessage(receivePacket.getAddress(), receivePacket.getPort(), true);
+                        processEmail(email, receivePacket.getAddress(), receivePacket.getPort(), serverSocket);
+                        sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), true);
                     } else {
-                        sendConfirmationMessage(receivePacket.getAddress(), receivePacket.getPort(), false,
-                                "Recipient email not found.");
+                        sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), false, "Recipient email not found.");
                     }
                 } else {
-                    sendConfirmationMessage(receivePacket.getAddress(), receivePacket.getPort(), false,
-                            "Invalid email format.");
+                    sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), false, "Invalid email format.");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -52,7 +50,7 @@ public class Server {
         }
     }
 
-    private static void processEmail(String email, InetAddress clientAddress, int clientPort) throws IOException {
+    private static void processEmail(String email, InetAddress clientAddress, int clientPort, DatagramSocket serverSocket) throws IOException {
         // Extract header and body (assuming simple format)
         String[] parts = email.split("\n\n", 2);
         String header = parts[0];
@@ -69,8 +67,7 @@ public class Server {
         System.out.println("Email saved to file: " + fileName);
     }
 
-    private static void sendConfirmationMessage(InetAddress clientAddress, int clientPort, boolean success,
-            String... errorMessages) throws IOException {
+    private static void sendConfirmationMessage(DatagramSocket serverSocket, InetAddress clientAddress, int clientPort, boolean success, String... errorMessages) throws IOException {
         String message;
         if (success) {
             message = "250 OK\nEmail received successfully at " + LocalDateTime.now().toString();
@@ -83,23 +80,21 @@ public class Server {
         }
 
         byte[] sendData = message.getBytes();
-        DatagramSocket replySocket = new DatagramSocket();
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
-        replySocket.send(sendPacket);
-        replySocket.close();
+        serverSocket.send(sendPacket);
     }
 
     private static boolean isValidEmail(String email) {
         if (email == null || email.isEmpty()) {
             return false;
         }
-        
+
         // Split using "@" symbol to separate username and domain parts
         String[] parts = email.split("@", 2);
         if (parts.length != 2) {
             return false; // Must have exactly one "@" symbol
         }
-         
+
         // Check username validity (allow letters, numbers, periods, hyphens, and underscores)
         String username = parts[0];
         if (!username.matches("^[\\w\\.-]+$")) {
@@ -111,10 +106,9 @@ public class Server {
         if (!domain.matches("^[\\w\\.-]+$")) {
             return false;
         }
-        
+
         return true;
     }
-    
 
     private static String extractToAddress(String email) {
         // Assuming simple format, extract the first line after "TO:"
@@ -126,8 +120,6 @@ public class Server {
         }
         return null;
     }
-    
-    
 
     private static boolean isValidRecipient(String email) {
         return VALID_EMAILS.contains(email);
