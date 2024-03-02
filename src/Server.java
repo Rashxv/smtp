@@ -6,12 +6,13 @@ import java.util.HashSet;
 
 public class Server {
 
+    // Constants
     private static final int SERVER_PORT = 54320;
     private static final String SAVE_DIRECTORY = "C:\\Users\\USER\\Codes\\oop_codes\\smtp\\emails\\";
-    private static final HashSet<String> VALID_EMAILS = new HashSet<>(); // Add your valid email addresses here
+    private static final HashSet<String> VALID_EMAILS = new HashSet<>(); // Set to store valid email addresses
 
     static {
-        // Add your valid email addresses to the set
+        // Add valid email addresses to the set
         VALID_EMAILS.add("r@kok.com");
         VALID_EMAILS.add("a@kok.com");
         VALID_EMAILS.add("s@kok.com");
@@ -19,6 +20,7 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException {
+        // Set up server socket
         DatagramSocket serverSocket = new DatagramSocket(SERVER_PORT);
         System.out.println("Mail Server Starting at host: " + InetAddress.getLocalHost().getHostName());
         System.out.println("Waiting to be contacted for transferring Mail...");
@@ -39,9 +41,11 @@ public class Server {
                         processEmail(email, receivePacket.getAddress(), receivePacket.getPort(), serverSocket);
                         sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), true);
                     } else {
+                        // Send error message if recipient not found
                         sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), false, "Recipient email not found.");
                     }
                 } else {
+                    // Send error message if invalid email format
                     sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), false, "Invalid email format.");
                 }
             } catch (IOException e) {
@@ -50,6 +54,7 @@ public class Server {
         }
     }
 
+    // Process received email and save to file
     private static void processEmail(String email, InetAddress clientAddress, int clientPort, DatagramSocket serverSocket) throws IOException {
         // Extract header and body (assuming simple format)
         String[] parts = email.split("\n\n", 2);
@@ -67,11 +72,14 @@ public class Server {
         System.out.println("Email saved to file: " + fileName);
     }
 
+    // Send confirmation message to the client
     private static void sendConfirmationMessage(DatagramSocket serverSocket, InetAddress clientAddress, int clientPort, boolean success, String... errorMessages) throws IOException {
         String message;
         if (success) {
+            // Send success message with timestamp
             message = "250 OK\nEmail received successfully at " + LocalDateTime.now().toString();
         } else {
+            // Send error message with specific error details
             StringBuilder errorMessageBuilder = new StringBuilder("501 Error\n");
             for (String errorMessage : errorMessages) {
                 errorMessageBuilder.append(errorMessage).append("\n");
@@ -79,11 +87,13 @@ public class Server {
             message = errorMessageBuilder.toString();
         }
 
+        // Convert message to bytes and send to the client
         byte[] sendData = message.getBytes();
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
         serverSocket.send(sendPacket);
     }
 
+    // Check if the provided email address is valid
     private static boolean isValidEmail(String email) {
         if (email == null || email.isEmpty()) {
             return false;
@@ -110,6 +120,7 @@ public class Server {
         return true;
     }
 
+    // Extract recipient email address from the email content
     private static String extractToAddress(String email) {
         // Assuming simple format, extract the first line after "TO:"
         String[] lines = email.split("\n");
@@ -121,6 +132,7 @@ public class Server {
         return null;
     }
 
+    // Check if the recipient email is valid
     private static boolean isValidRecipient(String email) {
         return VALID_EMAILS.contains(email);
     }
