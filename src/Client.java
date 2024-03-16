@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 public class Client {
 
-    // Constantsttt
+    // Constants
     private static final int SERVER_PORT = 54;
     private static final String QUIT_COMMAND = "QUIT";
 
@@ -19,8 +19,7 @@ public class Client {
         System.out.println(clientHostName);
 
         // Get mail server name from user
-        System.out.print("Type name of Mail server: ");
-        String serverHostName = scanner.nextLine();
+        String serverHostName = getValidHostName(scanner);
 
         while (true) {
             // Create email
@@ -48,6 +47,23 @@ public class Client {
         // Close sockets and scanner
         clientSocket.close();
         scanner.close();
+    }
+
+    // Get a valid host name from the user
+    private static String getValidHostName(Scanner scanner) {
+        String serverHostName = "";
+        boolean validHostName = false;
+        while (!validHostName) {
+            try {
+                System.out.print("Type name of Mail server: ");
+                serverHostName = scanner.nextLine();
+                InetAddress.getByName(serverHostName); // Attempt to resolve the host name
+                validHostName = true; // If no exception is thrown, the host name is valid
+            } catch (UnknownHostException e) {
+                System.out.println("Host does not exist. Please enter a valid host name.");
+            }
+        }
+        return serverHostName;
     }
 
     // Create email by taking user input

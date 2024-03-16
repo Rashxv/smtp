@@ -1,0 +1,7 @@
+HEADER:
+FROM: a@kok.com
+TO: r@kok.com
+SUBJECT: rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+BODY:
+
+t
