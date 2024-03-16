@@ -1,5 +1,0 @@
-TO: r@kok.com
-FROM: a@kok.com
-SUBJECT: 555
-
-fff
