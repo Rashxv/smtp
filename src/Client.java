@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 public class Client {
 
-    // Constants
+    // Constantsttt
     private static final int SERVER_PORT = 54;
     private static final String QUIT_COMMAND = "QUIT";
 
