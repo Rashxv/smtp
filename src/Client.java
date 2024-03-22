@@ -4,8 +4,6 @@ import java.util.Scanner;
 
 public class Client {
 
-    // Constants
-    private static final int SERVER_PORT = 54;
     private static final String QUIT_COMMAND = "QUIT";
 
     public static void main(String[] args) throws IOException {
@@ -21,6 +19,9 @@ public class Client {
         // Get mail server name from user
         String serverHostName = getValidHostName(scanner);
 
+        // Get mail server port from user
+        int serverPort = getValidPort(scanner);
+
         while (true) {
             // Create email
             String email = createEmail();
@@ -31,7 +32,7 @@ public class Client {
 
             byte[] sendData = email.getBytes();
             InetAddress serverAddress = InetAddress.getByName(serverHostName);
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, SERVER_PORT);
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);
 
             // Send email to the server and wait for response
             clientSocket.send(sendPacket);
@@ -64,6 +65,26 @@ public class Client {
             }
         }
         return serverHostName;
+    }
+
+    // Get a valid port number from the user
+    private static int getValidPort(Scanner scanner) {
+        int port = 0;
+        boolean validPort = false;
+        while (!validPort) {
+            try {
+                System.out.print("Enter the port number: ");
+                port = Integer.parseInt(scanner.nextLine());
+                if (port > 0 && port <= 65535) {
+                    validPort = true;
+                } else {
+                    System.out.println("Port number must be between 1 and 65535.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid port number. Please enter a valid integer.");
+            }
+        }
+        return port;
     }
 
     // Create email by taking user input

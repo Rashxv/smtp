@@ -4,13 +4,14 @@ import java.util.regex.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
+import java.util.Scanner;
 
 public class Server {
     // Constants
-    private static final int SERVER_PORT = 54;
     private static final String SAVE_DIRECTORY = "C:\\Users\\USER\\Codes\\oop_codes\\smtp\\emails\\";
     private static final HashSet<String> VALID_EMAILS = new HashSet<>(); // Set to store valid email addresses
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("EEE. MMM. d, yyyy HH:mm");
+
     static {
         // Add valid email addresses to the set
         VALID_EMAILS.add("r@kok.com");
@@ -21,11 +22,15 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
         // Set up server socket
-        DatagramSocket serverSocket = new DatagramSocket(SERVER_PORT);
-        System.out.println("Mail Server Starting at host: " + InetAddress.getLocalHost().getHostName());
-        System.out.println("Waiting to be contacted for transferring Mail...");
-        while (true) {
-            try {
+        DatagramSocket serverSocket = null;
+        int serverPort = getValidPort(); // Prompt the user to enter the port number
+
+        try {
+            serverSocket = new DatagramSocket(serverPort);
+            System.out.println("Mail Server Starting at host: " + InetAddress.getLocalHost().getHostName());
+            System.out.println("Waiting to be contacted for transferring Mail...");
+
+            while (true) {
                 // Receive email
                 byte[] receiveData = new byte[1024];
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -51,10 +56,35 @@ public class Server {
                     sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(), false,
                             "Invalid email format.");
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
             }
         }
+    }
+
+    // Prompt the user to enter the port number and validate it
+    private static int getValidPort() {
+        Scanner scanner = new Scanner(System.in);
+        int port = 0;
+        boolean validPort = false;
+        while (!validPort) {
+            try {
+                System.out.print("Enter the port number: ");
+                port = Integer.parseInt(scanner.nextLine());
+                if (port > 0 && port <= 65535) {
+                    validPort = true;
+                } else {
+                    System.out.println("Port number must be between 1 and 65535.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid port number. Please enter a valid integer.");
+            }
+        }
+        return port;
     }
 
     // Process received email and save to file
