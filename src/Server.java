@@ -44,6 +44,12 @@ public class Server {
                     if (isValidRecipient(toAddress) && isValidRecipient(fromAddress)) {
                         // Process and save email
                         processEmail(email, receivePacket.getAddress(), receivePacket.getPort(), serverSocket);
+                        // Get receiver client's address and port
+                        InetAddress receiverClientAddress = InetAddress.getLocalHost(); // Change this 888888888
+                        int receiverClientPort = 1235; // Change this 888888888
+                        // Send email to receiver client
+                        sendEmailToReceiverClient(email, receiverClientAddress, receiverClientPort, serverSocket);
+                        // Send confirmation message to sender client
                         sendConfirmationMessage(serverSocket, receivePacket.getAddress(), receivePacket.getPort(),
                                 true);
                     } else {
@@ -116,12 +122,20 @@ public class Server {
         System.out.println("Email saved to file: " + fileName);
     }
 
-    // Display Mail Header Fields
-    private static void displayMailHeader(InetAddress clientAddress, String fromAddress, String toAddress,
-            String header) {
-        System.out.println("Mail Received from " + clientAddress.getHostName());
-        System.out.println(header); // Display the rest of the header
-        System.out.println("TIME: " + LocalDateTime.now().format(DATE_TIME_FORMATTER));
+    private static void sendEmailToReceiverClient(String email, InetAddress receiverClientAddress,
+            int receiverClientPort, DatagramSocket serverSocket) {
+        try {
+            // Construct the message with email content
+            String message = "EMAIL\n" + email;
+
+            // Convert message to bytes and send to the receiver client
+            byte[] sendData = message.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, receiverClientAddress,
+                    receiverClientPort);
+            serverSocket.send(sendPacket);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // Send confirmation message to the client
@@ -145,6 +159,14 @@ public class Server {
         byte[] sendData = message.getBytes();
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
         serverSocket.send(sendPacket);
+    }
+
+    // Display Mail Header Fields
+    private static void displayMailHeader(InetAddress clientAddress, String fromAddress, String toAddress,
+            String header) {
+        System.out.println("Mail Received from " + clientAddress.getHostName());
+        System.out.println(header); // Display the rest of the header
+        System.out.println("TIME: " + LocalDateTime.now().format(DATE_TIME_FORMATTER));
     }
 
     // Check if both "From" and "To" email addresses are valid

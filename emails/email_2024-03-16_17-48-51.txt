@@ -1,7 +1,0 @@
-HEADER:
-FROM: a@kok.com
-TO: r@kok.com
-SUBJECT: yyyyyyyyyyyyyyyyyyyyyyyyyyy
-BODY:
-
-yyyyyyyyyyyyyyyyyyyyyyy
