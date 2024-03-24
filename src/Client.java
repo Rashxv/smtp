@@ -1,6 +1,9 @@
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.*;
 
 public class Client{ //Client (Email writter)
     public static void main(String[] args) {
@@ -56,7 +59,37 @@ public class Client{ //Client (Email writter)
                 System.out.print("Body: ");
                 String body = console.nextLine();
 
-                String request = "TO:" + to + "FROM:" + from + "SUBJECT:" + subject + "SEQ:" + sequenceNum + "BODY:" + body + "HOST:" + hostname; //request message
+                String attachmentBase64 = "";
+                while(true)
+                {
+                    System.out.print("Attach a file? (yes/no): ");
+                    String attachFile = console.nextLine();
+                    if (attachFile.equalsIgnoreCase("yes")) {
+                        System.out.print("Enter file path: ");
+                        String filePath = console.nextLine();
+                        File file = new File(filePath);
+                        if (file.exists() && !file.isDirectory()) {
+                            byte[] fileContent = Files.readAllBytes(file.toPath());
+                            String fileExtension = getFileExtension(file);
+                            attachmentBase64 = Base64.getEncoder().encodeToString(fileContent) + "," + fileExtension; // Append file extension
+                            break ;
+                        } else {
+                            System.out.println("File does not exist or is a directory.");
+                            continue ;
+                        }
+                    }
+                    else if (attachFile.equalsIgnoreCase("no"))
+                    {
+                        break ;
+                    }
+                    else
+                    {
+                        System.out.println("Invalid Input");
+                        continue ;
+                    }
+                }
+
+                String request = "TO:" + to + "FROM:" + from + "SUBJECT:" + subject + "SEQ:" + sequenceNum + "BODY:" + body + "ATTACHMENT:" + attachmentBase64 + "HOST:" + hostname;
 
                 send_message(request, serverAddress, serverPort, clientSocket); //calls send_message function (bottom)
 
@@ -82,6 +115,41 @@ public class Client{ //Client (Email writter)
                     System.out.println("Email received successfully at " + timestamp[1]);
                     System.out.println("Sending ACK");
                     send_message("ACK", serverAddress, serverPort, clientSocket);
+
+                    String timestamp2 = java.time.LocalDateTime.now().toString().replace(":", "-");
+
+                    String directoryPath = "./ClientLocalMails/";
+                    String filename = "S_" + subject + "_" + timestamp2 + ".txt";
+                    String relativeFilePath = directoryPath + filename;
+                    File directory = new File(directoryPath);
+                    directory.mkdirs();
+                    System.out.println("Mail saved in Local sender directory");
+
+                    File f = new File(relativeFilePath);
+
+                    PrintWriter fout = new PrintWriter(f);
+                    fout.println("FROM: " + from);
+                    fout.println("TO: " + to);
+                    fout.println("SUBJECT: " + subject);
+                    fout.println("TIME: " + timestamp);
+                    fout.println(body);
+                    fout.close();
+                    if (!attachmentBase64.isEmpty()) {
+                        // Decode the Base64 attachment data
+                        String splitter[] = attachmentBase64.split(",");
+                        String attachmentDecode = splitter[0];
+                        String attachmentExtension = splitter[1];
+                        byte[] decodedBytes = Base64.getDecoder().decode(attachmentDecode);
+    
+                        File attachmentFile = new File(relativeFilePath + "_attach." + attachmentExtension);
+                        try (FileOutputStream fos = new FileOutputStream(attachmentFile)) {
+                            fos.write(decodedBytes);
+                            System.out.println("Attachment saved to " + directoryPath);
+                        } catch (IOException e) {
+                            System.out.println("Error saving attachment: " + e.getMessage());
+                        }
+                    }
+                    
                     
                 }
                 else if (confirmation.contains("501 Error")) //packet failed
@@ -149,7 +217,8 @@ public class Client{ //Client (Email writter)
                 else
                     continue ;
             }
-        } catch (IOException e) { //catch IOException (Inputs, files error)
+        
+    } catch (IOException e) { //catch IOException (Inputs, files error)
             e.printStackTrace(); //print where the error was
         } finally {
             if (clientSocket != null && !clientSocket.isClosed()) {
@@ -158,7 +227,17 @@ public class Client{ //Client (Email writter)
             console.close();
         }
     }
-
+    private static String getFileExtension(File file) {
+        String fileName = file.getName();
+        int dotIndex = fileName.lastIndexOf('.');
+        if(dotIndex > 0 && dotIndex < fileName.length() - 1) {
+            // Return the substring after the last dot, to the end of the string.
+            return fileName.substring(dotIndex + 1);
+        } else {
+            // No extension found
+            return "";
+        }
+    }
     static void send_message(String message, InetAddress serverAddress, int portNumber, DatagramSocket currentSocket)
     {
         try{
@@ -170,6 +249,15 @@ public class Client{ //Client (Email writter)
             currentSocket.send(sendPacket); //send packet(Bytes, Bytes length, address to send, port number)
         } catch(IOException e) { //catch IOException
             e.printStackTrace();
+        }
+    }
+        static String encodeFileToBase64(String filePath) {
+        try {
+            byte[] fileContent = Files.readAllBytes(Paths.get(filePath));
+            return Base64.getEncoder().encodeToString(fileContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
         }
     }
 }

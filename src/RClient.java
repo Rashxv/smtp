@@ -73,13 +73,15 @@ public class RClient{ //Client (Email writter)
                 String subject = a4[0];
                 String a5[] = a4[1].split("BODY:");
                 sequenceNum = Integer.parseInt(a5[0]);
-                String a6[] = a5[1].split("HOST:");
+                String a6[] = a5[1].split("ATTACHMENT:");
                 String body = a6[0];
+                String a7[] = a6[1].split("HOST:");
+                String attachmentData = a7[0];
 
                 System.out.println("Mail Received from " + from); //print the hostname of the address
-                String directoryPath = "./localMails/";
+                String directoryPath = "./ReceiverLocalMails/";
                 String timestamp = java.time.LocalDateTime.now().toString().replace(":", "-");
-                String filename = subject + "_" + timestamp + ".txt";
+                String filename = "R_" + subject + "_" + timestamp + ".txt";
                 String relativeFilePath = directoryPath + filename;
                 File directory = new File(directoryPath);
                 directory.mkdirs();
@@ -103,6 +105,23 @@ public class RClient{ //Client (Email writter)
                 fout.println(body);
                 fout.close();
                 
+                if (!attachmentData.isEmpty()) {
+                    // Decode the Base64 attachment data
+                    String splitter[] = attachmentData.split(",");
+                    String attachmentDecode = splitter[0];
+                    String attachmentExtension = splitter[1];
+                    byte[] decodedBytes = Base64.getDecoder().decode(attachmentDecode);
+
+                    File attachmentFile = new File(relativeFilePath + "_attach." + attachmentExtension);
+                    try (FileOutputStream fos = new FileOutputStream(attachmentFile)) {
+                        fos.write(decodedBytes);
+                        System.out.println("Attachment saved to " + directoryPath);
+                    } catch (IOException e) {
+                        System.out.println("Error saving attachment: " + e.getMessage());
+                    }
+                }
+                
+            
             }
         } catch (IOException e) { //catch IOException (Inputs, files error)
             e.printStackTrace(); //print where the error was

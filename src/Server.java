@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Scanner;
 
@@ -116,9 +117,12 @@ public class Server{ //server
                 String subject = a4[0];
                 String a5[] = a4[1].split("BODY:");
                 senderNum = Integer.parseInt(a5[0]);
-                String a6[] = a5[1].split("HOST:");
+                String a6[] = a5[1].split("ATTACHMENT:");
                 String body = a6[0];
-                String hostname = a6[1];
+                String a7[] = a6[1].split("HOST:");
+                String attachmentData = a7[0];
+                String hostname = a7[1];
+
 
                 System.out.println("(Sender) Sending ACK:" + (senderNum + receivePacket.getLength()));
                 send_message("ACK:" + (senderNum + receivePacket.getLength()), senderAddress, senderPort, serverSocket);
@@ -153,7 +157,7 @@ public class Server{ //server
                     System.out.println("Sending mail to client receiver...");
                     if (to.equalsIgnoreCase(receiverMail))
                     {
-                        String receiverMessage = "TO:" + to + "FROM:" + from + "SUBJECT:" + subject + "SEQ:" + receiverNum + "BODY:" + body + "HOST:" + hostname;
+                        String receiverMessage = "TO:" + to + "FROM:" + from + "SUBJECT:" + subject + "SEQ:" + receiverNum + "BODY:" + body + "ATTACHMENT:" + attachmentData + "HOST:" + hostname;
                         send_message(receiverMessage, receiverAddress, receiverPort, serverSocket);
                         serverSocket.receive(receivePacket);
                         String ackString = new String(receivePacket.getData(), 0, receivePacket.getLength());
@@ -192,7 +196,23 @@ public class Server{ //server
                     fout.println(body);
                     fout.close();
 
+                    if (!attachmentData.isEmpty()) {
+                        // Decode the Base64 attachment data
+                        String splitter[] = attachmentData.split(",");
+                        String attachmentDecode = splitter[0];
+                        String attachmentExtension = splitter[1];
+                        byte[] decodedBytes = Base64.getDecoder().decode(attachmentDecode);
+
+                        File attachmentFile = new File(relativeFilePath + "_attach." + attachmentExtension);
+                        try (FileOutputStream fos = new FileOutputStream(attachmentFile)) {
+                            fos.write(decodedBytes);
+                            System.out.println("Attachment saved to " + directoryPath);
+                        } catch (IOException e) {
+                            System.out.println("Error saving attachment: " + e.getMessage());
+                        }
+                    }
                     System.out.println("mail sent to client at " + hostname + ":" + clientAddress);
+                
                 }
                 else if (!isValidEmailAddresses(to,from)){
                     System.out.println("The Header fields are not valid.");

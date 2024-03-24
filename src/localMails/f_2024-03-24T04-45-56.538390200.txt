@@ -1,5 +1,0 @@
-FROM: r@kok.com
-TO: s@s
-SUBJECT: f
-TIME: 2024-03-24T04-45-56.538390200
-g
